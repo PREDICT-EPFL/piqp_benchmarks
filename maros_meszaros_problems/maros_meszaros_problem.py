@@ -1,9 +1,12 @@
 import os
-from multiprocessing import Pool, cpu_count
+import time
+from multiprocessing import Queue, Pool, Process, cpu_count
+from multiprocessing.pool import ThreadPool
 from itertools import repeat
 import pandas as pd
 
 from solvers.solvers import SOLVER_MAP
+import solvers.statuses as s
 from problem_classes.maros_meszaros import MarosMeszaros
 from utils.general import make_sure_path_exists
 from utils.maros_meszaros import OPT_COST_MAP
@@ -56,7 +59,7 @@ class MarosMeszarosRunner(object):
         print("-------------------------------")
 
         if parallel:
-            pool = Pool(processes=min(cores, cpu_count()))
+            pool = ThreadPool(processes=min(cores, cpu_count()))
 
         # Iterate over all solvers
         for solver in self.solvers:
@@ -79,10 +82,10 @@ class MarosMeszarosRunner(object):
             if not os.path.isfile(results_file_name):
                 # Solve Maros Meszaros problems
                 if parallel:
-                    results = pool.starmap(self.solve_single_example,
+                    results = pool.starmap(self.solve_single_example_with_timeout,
                                            zip(self.problems,
                                                repeat(solver),
-                                               repeat(settings)))
+                                               repeat(settings)), 1)
                 else:
                     results = []
                     for problem in self.problems:
@@ -106,6 +109,47 @@ class MarosMeszarosRunner(object):
             pool.close()  # Not accepting any more jobs on this pool
             pool.join()   # Wait for all processes to finish
 
+    def solve_single_example_with_timeout(self, problem, solver, settings):
+        q = Queue()
+        p = Process(target=self.solve_single_example_in_queue, args=(q, problem, solver, settings))
+        p.start()
+
+        start_time = time.time()
+        time_passed = time.time() - start_time
+        while time_passed < settings['time_limit'] + 5:
+            if not p.is_alive():
+                break
+            time.sleep(1.0)
+            time_passed = time.time() - start_time
+
+        # if still alive, we kill it and return timeout
+        if p.is_alive():
+            p.terminate()
+            p.join()
+
+            full_name = os.path.join(".", "problem_classes",
+                                     PROBLEMS_FOLDER, problem)
+            instance = MarosMeszaros(full_name)
+            P = instance.qp_problem['P']
+            A = instance.qp_problem['A']
+            N = P.nnz + A.nnz
+            return pd.DataFrame({'name': [problem],
+                                 'solver': [solver],
+                                 'status': [s.TIME_LIMIT],
+                                 'run_time': [settings['time_limit']],
+                                 'iter': [0],
+                                 'obj_val': [np.inf],
+                                 'obj_opt': [OPT_COST_MAP[problem]],
+                                 #  'obj_dist': [obj_dist],
+                                 'n': [instance.qp_problem["n"]],
+                                 'm': [instance.qp_problem["m"]],
+                                 'N': [N]})
+
+        return q.get()
+
+    def solve_single_example_in_queue(self, queue, problem, solver, settings):
+        queue.put(self.solve_single_example(problem, solver, settings))
+
     def solve_single_example(self,
                              problem,
                              solver, settings):
@@ -124,7 +168,7 @@ class MarosMeszarosRunner(object):
                                  PROBLEMS_FOLDER, problem)
         instance = MarosMeszaros(full_name)
 
-        print(" - Solving %s with solver %s" % (problem, solver))
+        print(" - Solving %s with solver %s" % (problem, solver), flush=True)
 
         # Solve problem
         s = SOLVER_MAP[solver](settings)
@@ -172,8 +216,18 @@ class MarosMeszarosRunner(object):
             solution_dict['solve_time'] = results.solve_time
             solution_dict['update_time'] = results.update_time
             solution_dict['rho_updates'] = results.rho_updates
+        if solver[:4] == 'PIQP':
+            solution_dict['setup_time'] = results.setup_time
+            solution_dict['solve_time'] = results.solve_time
+            solution_dict['update_time'] = results.update_time
+        if solver[:6] == 'PROXQP':
+            solution_dict['setup_time'] = results.setup_time
+            solution_dict['solve_time'] = results.solve_time
+        if solver[:3] == 'SCS':
+            solution_dict['setup_time'] = results.setup_time
+            solution_dict['solve_time'] = results.solve_time
 
-        print(" - Solved %s with solver %s" % (problem, solver))
+        print(" - Solved %s with solver %s" % (problem, solver), flush=True)
 
         # Return solution
         return pd.DataFrame(solution_dict)

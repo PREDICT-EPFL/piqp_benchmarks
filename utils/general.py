@@ -78,11 +78,11 @@ def is_qp_solution_optimal(qp_problem, x, y, high_accuracy=False):
     primal-dual solution (x, y) and the tolerance eps
     '''
     if high_accuracy:
-        eps_abs = s.eps_high
-        eps_rel = s.eps_high
+        eps_abs = s.eps_abs_high
+        eps_rel = s.eps_rel_high
     else:
-        eps_abs=s.eps_low
-        eps_rel=s.eps_low
+        eps_abs = s.eps_abs_low
+        eps_rel = s.eps_rel_low
 
     # Get problem matrices
     P = qp_problem['P']
@@ -91,9 +91,12 @@ def is_qp_solution_optimal(qp_problem, x, y, high_accuracy=False):
     l = qp_problem['l']
     u = qp_problem['u']
 
+    l_finite = l[l < np.inf]
+    u_finite = u[u > -np.inf]
+
     # Check primal feasibility
     Ax = A.dot(x)
-    eps_pri = eps_abs + eps_rel * la.norm(Ax, np.inf)
+    eps_pri = eps_abs + eps_rel * np.max([la.norm(Ax, np.inf), la.norm(l_finite, np.inf), la.norm(u_finite, np.inf)])
     pri_res = np.minimum(Ax - l, 0) + np.maximum(Ax - u, 0)
 
     if la.norm(pri_res, np.inf) > eps_pri:
@@ -114,26 +117,5 @@ def is_qp_solution_optimal(qp_problem, x, y, high_accuracy=False):
               (la.norm(dua_res, np.inf), eps_dua))
         return False
 
-    # Check complementary slackness (REMOVED, not compatible with IP methods)
-    #  y_plus = np.maximum(y, 0)
-    #  y_minus = np.minimum(y, 0)
-    #
-    #  eps_comp = eps_abs + eps_rel * np.max([la.norm(Ax, np.inf)])
-    #
-    #  comp_res_u = np.minimum(y_plus, np.abs(u - Ax))
-    #  comp_res_l = np.minimum(-y_minus, np.abs(Ax - l))
-    #
-    #  if la.norm(comp_res_l, np.inf) > eps_comp:
-    #      print("Error in complementary slackness residual l: %.4e > %.4e" %
-    #            (la.norm(comp_res_l, np.inf), eps_comp))
-    #      return False
-    #
-    #  if la.norm(comp_res_u, np.inf) > eps_comp:
-    #      print("Error in complementary slackness residual u: %.4e > %.4e" %
-    #            (la.norm(comp_res_u, np.inf), eps_comp))
-    #      return False
-
     # If we arrived until here, the solution is optimal
     return True
-
-

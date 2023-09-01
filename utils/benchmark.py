@@ -6,8 +6,11 @@ from solvers.solvers import time_limit
 
 # Plotting
 import matplotlib
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 import matplotlib.pylab as plt
+
+from latexify import latexify
+latexify()
 
 MAX_TIMING = time_limit
 
@@ -24,7 +27,7 @@ def plot_performance_profiles(problems, solvers):
     df = pd.read_csv('./results/%s/performance_profiles.csv' % problems)
     plt.figure(0)
     for solver in solvers:
-        plt.plot(df["tau"], df[solver], label=solver)
+        plt.plot(df["tau"].to_numpy(), df[solver].to_numpy(), label=solver.replace('_high', ''))
     plt.xlim(1., 10000.)
     plt.ylim(0., 1.)
     plt.xlabel(r'Performance ratio $\tau$')
@@ -35,7 +38,105 @@ def plot_performance_profiles(problems, solvers):
     plt.show(block=False)
     results_file = './results/%s/%s.png' % (problems, problems)
     print("Saving plots to %s" % results_file)
-    plt.savefig(results_file)
+    plt.savefig(results_file, dpi=300)
+    results_file = './results/%s/%s.pdf' % (problems, problems)
+    print("Saving plots to %s" % results_file)
+    plt.savefig(results_file, bbox_inches='tight')
+
+
+def plot_solve_times(problems, solvers):
+
+    plt.figure(1)
+
+    maker_shapes = ['o', 's', 'd', 'v', '^', '*', 'P', '<', '>', 'X']
+
+    problem_order = None
+    for i, solver in enumerate(solvers):
+        path = os.path.join('.', 'results', problems, solver, 'results.csv')
+        df = pd.read_csv(path)
+        df.set_index('name')
+
+        df.loc[np.logical_and(*[df['status'] != s for s in statuses.SOLUTION_PRESENT]), 'run_time'] = MAX_TIMING
+
+        if problem_order is None:
+            df = df.sort_values(by=['run_time'])
+            problem_order = df.index
+        else:
+            df = df.loc[problem_order]
+
+        plt.scatter(np.arange(1, len(df['run_time'].values) + 1), df['run_time'].values,
+                    label=solver.replace('_high', ''),
+                    marker=maker_shapes[i],
+                    s=25,
+                    linewidths=0.5,
+                    edgecolors='black')
+    
+    plt.xlim(0, len(df['run_time'].values) + 1)
+    plt.ylim(1.5e-5, 1.5e3)
+    plt.xlabel('Problem Number')
+    plt.ylabel('Solve Time')
+    plt.yscale('log')
+    plt.legend()
+    plt.grid()
+
+    ax = plt.gca()
+    y_labels = [item.get_text() for item in ax.get_yticklabels()]
+    y_labels[-3] = 'Fail'
+    ax.set_yticklabels(y_labels)
+
+    plt.show(block=False)
+    results_file = './results/%s/%s_time.png' % (problems, problems)
+    print("Saving plots to %s" % results_file)
+    plt.savefig(results_file, dpi=300)
+    results_file = './results/%s/%s_time.pdf' % (problems, problems)
+    print("Saving plots to %s" % results_file)
+    plt.savefig(results_file, bbox_inches='tight')
+
+
+def plot_solve_iters(problems, solvers):
+
+    plt.figure(2)
+
+    maker_shapes = ['o', 's', 'd', 'v', '^', '*', 'P', '<', '>', 'X']
+
+    problem_order = None
+    for i, solver in enumerate(solvers):
+        if solver.replace('_high', '') not in ['PIQP', 'CLARABEL', 'GUROBI', 'MOSEK']:
+            continue
+        path = os.path.join('.', 'results', problems, solver, 'results.csv')
+        df = pd.read_csv(path)
+        df.set_index('name')
+
+        df.loc[np.logical_and(*[df['status'] != s for s in statuses.SOLUTION_PRESENT]), 'iter'] = 10000
+
+        if problem_order is None:
+            df = df.sort_values(by=['iter'])
+            problem_order = df.index
+        else:
+            df = df.loc[problem_order]
+
+        plt.scatter(np.arange(1, len(df['iter'].values) + 1), df['iter'].values,
+                    label=solver.replace('_high', ''),
+                    marker=maker_shapes[i],
+                    s=25,
+                    linewidths=0.5,
+                    edgecolors='black')
+    
+    plt.xlim(0, len(df['iter'].values) + 1)
+    plt.ylim(1e0, 200)
+    plt.xlabel('Problem Number')
+    plt.ylabel('Iterations')
+    plt.yscale('log')
+    plt.legend()
+    plt.grid()
+
+    plt.show(block=False)
+    results_file = './results/%s/%s_iter.png' % (problems, problems)
+    print("Saving plots to %s" % results_file)
+    plt.savefig(results_file, dpi=300)
+    results_file = './results/%s/%s_iter.pdf' % (problems, problems)
+    print("Saving plots to %s" % results_file)
+    plt.savefig(results_file, bbox_inches='tight')
 
 
 def get_cumulative_data(solvers, problems, output_folder):
@@ -77,7 +178,7 @@ def compute_performance_profiles(solvers, problems_type):
         # Set maximum time for solvers that did not succeed
         for idx in range(n_problems):
             if status[solver][idx] not in statuses.SOLUTION_PRESENT:
-                t[solver][idx] = MAX_TIMING
+                t[solver][idx] = 1e6 # MAX_TIMING
 
     r = {}  # Dictionary of relative times for each solver/problem
     for s in solvers:
@@ -351,7 +452,9 @@ def compute_rho_updates(problems_type, high_accuracy=False):
 def compute_stats_info(solvers, benchmark_type,
                        problems=None,
                        high_accuracy=False,
-                       performance_profiles=True):
+                       performance_profiles=True,
+                       solve_times=True,
+                       solve_iters=True):
 
     if problems is not None:
         # Collect cumulative data for each solver
@@ -368,11 +471,15 @@ def compute_stats_info(solvers, benchmark_type,
     compute_shifted_geometric_means(solvers, benchmark_type)
 
     # Compute polish statistics
-    if any(s.startswith('OSQP') for s in solvers):
-        compute_polish_statistics(benchmark_type, high_accuracy=high_accuracy)
-        compute_ratio_setup_solve(benchmark_type, high_accuracy=high_accuracy)
-        compute_rho_updates(benchmark_type, high_accuracy=high_accuracy)
+    # if any(s.startswith('OSQP') for s in solvers):
+    #     compute_polish_statistics(benchmark_type, high_accuracy=high_accuracy)
+    #     compute_ratio_setup_solve(benchmark_type, high_accuracy=high_accuracy)
+    #     compute_rho_updates(benchmark_type, high_accuracy=high_accuracy)
 
     # Plot performance profiles
     if performance_profiles:
         plot_performance_profiles(benchmark_type, solvers)
+    if solve_times:
+        plot_solve_times(benchmark_type, solvers)
+    if solve_iters:
+        plot_solve_iters(benchmark_type, solvers)

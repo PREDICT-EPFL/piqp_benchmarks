@@ -58,7 +58,57 @@ class MarosMeszaros(object):
         problem['n'] = self.n
         problem['m'] = self.m
 
+        l_inf = self.l
+        u_inf = self.u
+        l_inf[l_inf > +9e19] = +np.inf
+        u_inf[u_inf > +9e19] = +np.inf
+        l_inf[l_inf < -9e19] = -np.inf
+        u_inf[u_inf < -9e19] = -np.inf
+
+        # A == vstack([C, spa.eye(n)])
+        self.xl = l_inf[-self.n:]
+        self.xu = u_inf[-self.n:]
+        C = self.A[:-self.n]
+        cl = l_inf[:-self.n]
+        cu = u_inf[:-self.n]
+
+        self.A_eq, self.b, self.G, self.h, self.eq_rows, self.ineq_rows_l, self.ineq_rows_u = \
+            self._convert_problem_from_double_sided(C, cl, cu)
+
+        problem['A_eq'] = self.A_eq
+        problem['b'] = self.b
+        problem['G'] = self.G
+        problem['h'] = self.h
+        problem['xl'] = self.xl
+        problem['xu'] = self.xu
+        problem['eq_rows'] = self.eq_rows
+        problem['ineq_rows_l'] = self.ineq_rows_l
+        problem['ineq_rows_u'] = self.ineq_rows_u
+
         return problem
+
+    def _convert_problem_from_double_sided(self, C, l, u):
+
+        bounds_are_equal = u - l < 1e-10
+
+        eq_rows = np.asarray(bounds_are_equal).nonzero()
+        A = C[eq_rows]
+        b = u[eq_rows]
+
+        ineq_rows = np.asarray(np.logical_not(bounds_are_equal)).nonzero()
+        G = spa.vstack([C[ineq_rows], -C[ineq_rows]], format="csc")
+        h = np.hstack([u[ineq_rows], -l[ineq_rows]])
+        h_finite = h < np.inf
+        if not h_finite.all():
+            G = G[h_finite]
+            h = h[h_finite]
+
+        eq_rows = eq_rows[0]
+        ineq_rows = ineq_rows[0]
+        ineq_rows_l = ineq_rows[u[ineq_rows] < np.inf] if ineq_rows.shape[0] > 0 else ineq_rows
+        ineq_rows_u = ineq_rows[l[ineq_rows] > -np.inf] if ineq_rows.shape[0] > 0 else ineq_rows
+
+        return A, b, G, h, eq_rows, ineq_rows_l, ineq_rows_u
 
     def _generate_cvxpy_problem(self):
         '''
@@ -67,7 +117,10 @@ class MarosMeszaros(object):
         x_var = cvxpy.Variable(self.n)
         objective = .5 * cvxpy.quad_form(x_var, self.P) + self.q * x_var + \
             self.r
-        constraints = [self.A * x_var <= self.u, self.A * x_var >= self.l]
+        # constraints = [self.A * x_var <= self.u, self.A * x_var >= self.l]
+        constraints = [self.A_eq * x_var == self.b,
+                       self.G * x_var <= self.h,
+                       x_var <= self.xu, x_var >= self.xl]
         problem = cvxpy.Problem(cvxpy.Minimize(objective), constraints)
 
         return problem
@@ -84,6 +137,11 @@ class MarosMeszaros(object):
         x = variables[0].value
 
         # dual solution
-        y = constraints[0].dual_value - constraints[1].dual_value
+        # y = constraints[0].dual_value - constraints[1].dual_value
+        y = np.zeros(self.m)
+        y[self.eq_rows] = constraints[0].dual_value
+        y[self.ineq_rows_l] = constraints[1].dual_value[:self.ineq_rows_l.shape[0]]
+        y[self.ineq_rows_u] -= constraints[1].dual_value[self.ineq_rows_l.shape[0]:]
+        y[-self.n:] = constraints[2].dual_value - constraints[3].dual_value
 
         return x, y
