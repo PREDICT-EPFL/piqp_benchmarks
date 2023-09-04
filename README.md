@@ -49,7 +49,7 @@ and for high accuracy (`eps_abs=1e-08`, `eps_rel=1e-09`) are
   <img src="results/maros_meszaros_problems_high_accuracy/maros_meszaros_problems_high_accuracy.png" width="700" alt="maros_meszaros_problems_high_accuracy" align="center"/>
 </p>
 
-These results have been obtained on an AMD Ryzen Threadripper 3990X 64-Core @ 2.9GHz CPU.
+These results have been obtained on an AMD Ryzen Threadripper 3990X 64-Core @ 4.3GHz CPU.
 
 ## Citing
 
