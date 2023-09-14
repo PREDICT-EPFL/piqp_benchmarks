@@ -33,7 +33,7 @@ The resulting [shifted geometric means](http://plato.asu.edu/ftp/shgeom.html) fo
 
 | PIQP | OSQP | SCS   | PROXQP | GUROBI | MOSEK |
 | ---- | ---- | ----- | ------ | ------ | ----- |
-| 1.0  | 7.18 | 15.55 | 27.23  | 6.59   | 18.66 |
+| 1.0  | 7.55 | 11.38 | 31.72  | 6.72   | 5.29  |
 
 <p align="center">
   <img src="results/maros_meszaros_problems/maros_meszaros_problems.png" width="700" alt="maros_meszaros_problems" align="center"/>
@@ -43,7 +43,7 @@ and for high accuracy (`eps_abs=1e-08`, `eps_rel=1e-09`) are
 
 | PIQP | OSQP  | SCS   | PROXQP | GUROBI | MOSEK  |
 | ---- | ----- | ----- | ------ | ------ | ------ |
-| 1.0  | 42.01 | 32.92 | 28.66  | 22.50  | 287.64 |
+| 1.0  | 42.66 | 31.62 | 26.61  | 3.46   | 5.86   |
 
 <p align="center">
   <img src="results/maros_meszaros_problems_high_accuracy/maros_meszaros_problems_high_accuracy.png" width="700" alt="maros_meszaros_problems_high_accuracy" align="center"/>
