@@ -148,13 +148,21 @@ settings = {
                   },
     MOSEK: {'MSK_IPAR_NUM_THREADS': 1,
             'MSK_DPAR_OPTIMIZER_MAX_TIME': time_limit,
-            'MSK_DPAR_INTPNT_CO_TOL_PFEAS': eps_abs_low,   # Primal feasibility tolerance
-            'MSK_DPAR_INTPNT_CO_TOL_DFEAS': eps_abs_low,   # Dual feasibility tolerance
+            'MSK_DPAR_INTPNT_TOL_PFEAS': eps_abs_low,
+            'MSK_DPAR_INTPNT_TOL_DFEAS': eps_abs_low,
+            'MSK_DPAR_INTPNT_QO_TOL_PFEAS': eps_abs_low,
+            'MSK_DPAR_INTPNT_QO_TOL_DFEAS': eps_abs_low,
+            'MSK_DPAR_INTPNT_CO_TOL_PFEAS': eps_abs_low,
+            'MSK_DPAR_INTPNT_CO_TOL_DFEAS': eps_abs_low,
            },
     MOSEK_high: {'MSK_IPAR_NUM_THREADS': 1,
                  'MSK_DPAR_OPTIMIZER_MAX_TIME': time_limit,
-                 'MSK_DPAR_INTPNT_CO_TOL_PFEAS': eps_abs_high,   # Primal feasibility tolerance
-                 'MSK_DPAR_INTPNT_CO_TOL_DFEAS': eps_abs_high,   # Dual feasibility tolerance
+                 'MSK_DPAR_INTPNT_TOL_PFEAS': eps_abs_high,
+                 'MSK_DPAR_INTPNT_TOL_DFEAS': eps_abs_high,
+                 'MSK_DPAR_INTPNT_QO_TOL_PFEAS': eps_abs_high,
+                 'MSK_DPAR_INTPNT_QO_TOL_DFEAS': eps_abs_high,
+                 'MSK_DPAR_INTPNT_CO_TOL_PFEAS': eps_abs_high,
+                 'MSK_DPAR_INTPNT_CO_TOL_DFEAS': eps_abs_high,
                 },
     ECOS: {'abstol': eps_abs_low,
            'reltol': eps_rel_low},
