@@ -34,14 +34,14 @@ def main():
 
     # Add high accuracy solvers when accuracy
     if high_accuracy:
-        # solvers = [s.PIQP_high, s.CLARABEL_high, s.OSQP_high, s.SCS_high, s.PROXQP_high, s.GUROBI_high, s.MOSEK_high]
-        solvers = [s.PIQP_high, s.OSQP_high, s.SCS_high, s.PROXQP_high, s.GUROBI_high, s.MOSEK_high]
+        solvers = [s.PIQP_high, s.OSQP_high, s.QPALM_high, s.SCS_high, s.PROXQP_high, s.GUROBI_high, s.MOSEK_high]
+        # solvers = [s.PIQP_high, s.OSQP_high, s.SCS_high, s.PROXQP_high, s.GUROBI_high, s.MOSEK_high]
         OUTPUT_FOLDER = 'maros_meszaros_problems_high_accuracy'
         for key in s.settings:
             s.settings[key]['high_accuracy'] = True
     else:
-        # solvers = [s.PIQP, s.CLARABEL, s.OSQP, s.SCS, s.PROXQP, s.GUROBI, s.MOSEK]
-        solvers = [s.PIQP, s.OSQP, s.SCS, s.PROXQP, s.GUROBI, s.MOSEK]
+        solvers = [s.PIQP, s.OSQP, s.QPALM, s.SCS, s.PROXQP, s.GUROBI, s.MOSEK]
+        # solvers = [s.PIQP, s.OSQP, s.SCS, s.PROXQP, s.GUROBI, s.MOSEK]
         OUTPUT_FOLDER = 'maros_meszaros_problems'
 
     # Shut up solvers

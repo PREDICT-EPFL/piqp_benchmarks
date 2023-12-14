@@ -31,9 +31,9 @@ python run_maros_meszaros_problems.py
 ### Results
 The resulting [shifted geometric means](http://plato.asu.edu/ftp/shgeom.html) for low accuracy (`eps_abs=1e-03`, `eps_rel=1e-04`) are
 
-| PIQP | OSQP | SCS   | PROXQP | GUROBI | MOSEK |
-| ---- | ---- | ----- | ------ | ------ | ----- |
-| 1.0  | 7.55 | 11.38 | 31.72  | 6.72   | 5.29  |
+| PIQP | OSQP | SCS   | PROXQP | QPALM  | GUROBI | MOSEK |
+| ---- | ---- | ----- | ------ | ------ | ------ | ----- |
+| 1.0  | 7.55 | 11.38 | 31.72  | 3.45   | 6.72   | 5.29  |
 
 <p align="center">
   <img src="results/maros_meszaros_problems/maros_meszaros_problems.png" width="700" alt="maros_meszaros_problems" align="center"/>
@@ -41,9 +41,9 @@ The resulting [shifted geometric means](http://plato.asu.edu/ftp/shgeom.html) fo
 
 and for high accuracy (`eps_abs=1e-08`, `eps_rel=1e-09`) are
 
-| PIQP | OSQP  | SCS   | PROXQP | GUROBI | MOSEK  |
-| ---- | ----- | ----- | ------ | ------ | ------ |
-| 1.0  | 42.66 | 31.62 | 26.61  | 3.46   | 5.86   |
+| PIQP | OSQP  | SCS   | PROXQP | QPALM  | GUROBI | MOSEK  |
+| ---- | ----- | ----- | ------ | ------ | ------ | ------ |
+| 1.0  | 42.66 | 31.62 | 26.61  | 6.97   | 3.46   | 5.86   |
 
 <p align="center">
   <img src="results/maros_meszaros_problems_high_accuracy/maros_meszaros_problems_high_accuracy.png" width="700" alt="maros_meszaros_problems_high_accuracy" align="center"/>

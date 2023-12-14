@@ -5,6 +5,7 @@ from solvers.mosek import MOSEKSolver
 from solvers.osqp import OSQPSolver
 from solvers.piqp import PIQPSolver
 from solvers.proxqp import PROXQPSolver
+from solvers.qpalm import QPALMSolver
 from solvers.scs import SCSSolver
 
 CLARABEL = 'CLARABEL'
@@ -21,6 +22,8 @@ PIQP = 'PIQP'
 PIQP_high = PIQP + '_high'
 PROXQP = 'PROXQP'
 PROXQP_high = PROXQP + '_high'
+QPALM = 'QPALM'
+QPALM_high = QPALM + '_high'
 SCS = 'SCS'
 SCS_high = SCS + '_high'
 MOSEK = 'MOSEK'
@@ -36,6 +39,8 @@ SOLVER_MAP = {CLARABEL: ClarabelSolver,
               PIQP_high: PIQPSolver,
               PROXQP: PROXQPSolver,
               PROXQP_high: PROXQPSolver,
+              QPALM: QPALMSolver,
+              QPALM_high: QPALMSolver,
               SCS: SCSSolver,
               SCS_high: SCSSolver,
               GUROBI: GUROBISolver,
@@ -126,6 +131,20 @@ settings = {
                   'eps_duality_gap_rel': eps_rel_high,
                   'compute_timings': True,
     },
+    QPALM: {'time_limit': time_limit,
+            'eps_abs': eps_abs_low,
+            'eps_rel': eps_rel_low,
+            'max_iter': int(1e09),
+            'eps_prim_inf': 1e-15,  # Disable infeas check
+            'eps_dual_inf': 1e-15
+    },
+    QPALM_high: {'time_limit': time_limit,
+                 'eps_abs': eps_abs_high,
+                 'eps_rel': eps_rel_high,
+                 'max_iter': int(1e09),
+                 'eps_prim_inf': 1e-15,  # Disable infeas check
+                 'eps_dual_inf': 1e-15
+    },
     SCS: {'eps_abs': eps_abs_low,
           'eps_rel': eps_rel_low,
           'max_iters': int(1e09),
@@ -148,21 +167,13 @@ settings = {
                   },
     MOSEK: {'MSK_IPAR_NUM_THREADS': 1,
             'MSK_DPAR_OPTIMIZER_MAX_TIME': time_limit,
-            'MSK_DPAR_INTPNT_TOL_PFEAS': eps_abs_low,
-            'MSK_DPAR_INTPNT_TOL_DFEAS': eps_abs_low,
-            'MSK_DPAR_INTPNT_QO_TOL_PFEAS': eps_abs_low,
-            'MSK_DPAR_INTPNT_QO_TOL_DFEAS': eps_abs_low,
-            'MSK_DPAR_INTPNT_CO_TOL_PFEAS': eps_abs_low,
-            'MSK_DPAR_INTPNT_CO_TOL_DFEAS': eps_abs_low,
+            'MSK_DPAR_INTPNT_CO_TOL_PFEAS': eps_abs_low,   # Primal feasibility tolerance
+            'MSK_DPAR_INTPNT_CO_TOL_DFEAS': eps_abs_low,   # Dual feasibility tolerance
            },
     MOSEK_high: {'MSK_IPAR_NUM_THREADS': 1,
                  'MSK_DPAR_OPTIMIZER_MAX_TIME': time_limit,
-                 'MSK_DPAR_INTPNT_TOL_PFEAS': eps_abs_high,
-                 'MSK_DPAR_INTPNT_TOL_DFEAS': eps_abs_high,
-                 'MSK_DPAR_INTPNT_QO_TOL_PFEAS': eps_abs_high,
-                 'MSK_DPAR_INTPNT_QO_TOL_DFEAS': eps_abs_high,
-                 'MSK_DPAR_INTPNT_CO_TOL_PFEAS': eps_abs_high,
-                 'MSK_DPAR_INTPNT_CO_TOL_DFEAS': eps_abs_high,
+                 'MSK_DPAR_INTPNT_CO_TOL_PFEAS': eps_abs_high,   # Primal feasibility tolerance
+                 'MSK_DPAR_INTPNT_CO_TOL_DFEAS': eps_abs_high,   # Dual feasibility tolerance
                 },
     ECOS: {'abstol': eps_abs_low,
            'reltol': eps_rel_low},
