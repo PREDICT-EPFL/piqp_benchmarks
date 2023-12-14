@@ -8,6 +8,7 @@ These are the scripts to compare the following Quadratic Program (QP) solvers
 -   OSQP
 -   SCS
 -   PROXQP
+-   QPALM
 -   GUROBI
 -   MOSEK
 
